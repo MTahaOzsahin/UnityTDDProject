@@ -235,8 +235,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 871d74b0098307741b559ac7e8f26355, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerMovementSpeed: 1
-  inputPressedThresholdInSecond: 0
 --- !u!143 &230633479
 CharacterController:
   m_ObjectHideFlags: 0
