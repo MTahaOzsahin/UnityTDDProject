@@ -1,6 +1,4 @@
-using InputSystem;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace Controller.Player
 {
@@ -11,69 +9,75 @@ namespace Controller.Player
 
         [Header("Variables")] 
         private bool isPlayerHolding;
-        private float playerHoldingTimeInSeconds;
-        private Vector3 playerDirection;
-
-        [Header("Inputs")] 
-        private TDDProtectInputMaster playerInputMaster;
+        private float playerHoldingTimeInSeconds = 1f;
+        private Vector3 refVector;
+        [SerializeField,Range(1f,10f)] private float playerMaxSpeed;
         
-
         private void Awake()
         {
             playerCharacterController = GetComponent<CharacterController>();
-            playerInputMaster = new TDDProtectInputMaster();
-        }
-
-        private void OnEnable()
-        {
-            playerInputMaster.Enable();
-            playerInputMaster.PlayerController.Move.started += StartMove;
-            playerInputMaster.PlayerController.Run.performed += StartRun;
-            playerInputMaster.PlayerController.Run.canceled += StopMovement;
-        }
-
-        private void OnDisable()
-        {
-            playerInputMaster.PlayerController.Run.performed -= StartRun;
-            playerInputMaster.PlayerController.Move.started -= StartMove;
-            playerInputMaster.PlayerController.Run.canceled -= StopMovement;
-            playerInputMaster.Disable();
-        }
-
-        private void StartMove(InputAction.CallbackContext value)
-        {
-            var originDirection = value.ReadValue<Vector2>();
-            playerDirection = new Vector3(originDirection.x, 0f, originDirection.y);
-            Debug.Log("Move");
-        }
-
-        private void StartRun(InputAction.CallbackContext value)
-        {
-            var originDirection = value.ReadValue<Vector2>();
-            playerDirection = new Vector3(originDirection.x, 0f, originDirection.y);
-            playerHoldingTimeInSeconds = (float)value.duration;
-            isPlayerHolding = true;
-            Debug.Log("Run" + playerHoldingTimeInSeconds);
-        }
-
-        private void StopMovement(InputAction.CallbackContext value)
-        {
-            isPlayerHolding = false;
-            playerDirection = Vector3.zero;
         }
 
         private void Update()
         {
-            PlayerMovement();
+            MovementController();
         }
 
-        private void PlayerMovement()
+        private void InputHandler()
         {
-            playerCharacterController.Move(playerDirection * (Time.deltaTime));
+            if (Input.GetKey(KeyCode.A)  || Input.GetKey(KeyCode.S) ||
+                Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.W))
+            {
+                isPlayerHolding = true;
+            }
+            else
+            {
+                isPlayerHolding = false;
+            }
+        }
+
+        private void HoldTimeHandler()
+        {
             if (isPlayerHolding)
             {
-                playerCharacterController.Move(playerDirection * (Time.deltaTime * playerHoldingTimeInSeconds) );
+                playerHoldingTimeInSeconds += Time.deltaTime * 3;
+                playerHoldingTimeInSeconds = Mathf.Clamp(playerHoldingTimeInSeconds, 1f, playerMaxSpeed);
             }
+            else
+            {
+                playerHoldingTimeInSeconds = 1f;
+            }
+        }
+
+        private Vector3 DirectionHandler()
+        {
+            var playerDirection = new Vector3(0f,0f,0f);
+            if (!isPlayerHolding) return Vector3.zero;
+            if (Input.GetKey(KeyCode.W))
+            {
+                playerDirection += Vector3.forward;
+            }
+            if (Input.GetKey(KeyCode.A))
+            {
+                playerDirection += Vector3.left;
+            }
+            if (Input.GetKey(KeyCode.S))
+            {
+                playerDirection += Vector3.back;
+            }
+            if (Input.GetKey(KeyCode.D))
+            {
+                playerDirection += Vector3.right;
+            }
+
+            return playerDirection;
+        }
+
+        private void MovementController()
+        {
+            InputHandler();
+            HoldTimeHandler();
+            playerCharacterController.Move(DirectionHandler() * (Time.deltaTime * playerHoldingTimeInSeconds));
         }
     }
 }
